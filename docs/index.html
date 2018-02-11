@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="ObjectFinder : Recognize 3D structures in image stacks" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,400italic,700italic,700' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,700,700italic' rel='stylesheet' type='text/css'>
+
+    <title>ObjectFinder : 3D object recognition in image volumes</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/lucadellasantina/ObjectFinder">View on GitHub</a>
+
+          <h2 id="project_title">ObjectFinder</h2>
+          <h2 id="project_tagline">3D object recognition in image volumes</h2>
+        </header>
+    </div>
+
+    <section class="outer">
+        <div class="downloads inner">
+          <a class="zip_download_link" href="https://github.com/lucadellasantina/ObjectFinder/releases/download/v4.0/ObjectFinder.mlappinstall">Download ObjectFinder v4.0</a>
+        </div>
+    </section>
+
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <div style="text-align:center"><h2>What is ObjectFinder?</h2><img src ="images/app_icon_big.png"/></div>
+        <p>
+        ObjectFinder is a MATLAB® app that allows you to recognize thousands of small structures, such as synapses in neuronal tissue, within a three-dimensional image volume. </p>
+
+        <p>ObjectFinder was originally developed for neuroscience research purposes, where it is able to detect fluorescently-labeled synapses in neuronal image stacks acquired using confocal or super-resolution microscopes.</p>
+
+        <div style="text-align:center"><img src ="images/Screenshot_heatmap.png" width="60%"/></div>
+
+        <div style="text-align:center"><h2>Free as in freedom</h2></div>
+
+        <p>ObjectFinder is licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GNU General Public License v3.</a>
+        This strong copyleft license ensures you will always have the right to obtain ObjectFinder for free, view and modify the source code to review its functionality and improve its features.</p>
+        <div style="text-align:center"><img src ="images/logo_gplv3.png"/></div>
+
+        <p>We strongly believe that software developed for data analysis in scientific research must be open source, to ensure the highest level of reproducibility of your science.</p>
+
+        <div style="text-align:center"><img src ="images/logo_open_source.png" width="100"/></div>
+
+        <div style="text-align:center"><h2>Tuned for speed!</h2></div>
+
+        <p>ObjectFinder can search hundred thosands objects in a matter of minutes by taking full advantage of your computer's CPU cores, this is achieved by implementing multi-threaded search inside the 3D volume.</p>
+
+        <p>For a typical workstation with an 8-core CPU this means an 8X fold faster speed compared to a classic app running on the same computer!</p>
+
+        <div style="text-align:center"><img src ="images/speed.png" width="80" height="80"/></div>
+
+        <div style="text-align:center"><h2>Multiplatform architecture</h2></div>
+
+        <p>Whether your workstation relies on Microsoft Windows, macOS or Linux, ObjectFinder can run on your computer since it relies only on core Matlab functions.</p>
+
+        <div style="text-align:center"><img src ="images/logo_platforms.png" width="75%"/></div>
+
+        Having a single codebase for all platforms makes developing new features as well as fixing bugs a much faster and enjoyable journey.
+
+        <div style="text-align:center"><h2>Seamlessly integrates with Bitplane Imaris®</h2></div>
+
+        ObjectFinder can display detected objects in Imaris® to take full advantage of Imaris advanced 3D rendering capabilities. You can visually add, remove or filter objects by visual inspection against the original signal and export them back to ObjectFinder for further processing.
+
+        <div style="text-align:center"><h2>Export results to Microsoft Excel®</h2></div>
+
+        Analysis results can be exported to Excel spreadsheets for further elaboration or plotting using your favorite data analysis application.
+
+        <div style="text-align:center"><img src ="images/Screenshot_export_excel.png" width="100%"/></div>
+
+        <div style="text-align:center"><h2>How do I use ObjectFinder with my image?</h2></div>
+
+        The object recognition process starts with you creating a folder structure for your experiment. Let's assume your experiment folder's name is called "MyExperiment".
+
+        <div style="text-align:left">
+        <ol>
+          <li>Download latest ObjectFinder verston at the top of this page</li>
+          <li>Install ObjectFinder using MATLAB "Install App" button</li>
+          <li>Start ObjectFinder from your Apps list.</li>
+          <div style="text-align:center"><img src ="images/Screenshot_MatlabApps.png" width="100%"/></div>
+          <li>place there all your original image stacks inside the folder "MyExperiment/I/" saved as 3D .tif files (one file per channel).</li>
+          <li>Select "MyExperiment" as the current working folder using the first home folder icon.</li>
+          <li>Click "Load Images", all available images will be previewed and you will be asked to instruct ObjectFinder on which image contains the structures to recognize. Optionally, you can also specify which a 3D binary mask to limit the search.</li>
+          <li>Click "Search Objects" to start the automatic search of objects.</li>
+          <li>Click "Filter Objects" to remove candidate objects that are too small (only one plane on Z) or touching the search mask's border</li>
+          <li>If you have Imaris® installed, you can click on "Inspect 3D" in order to visually inspect and refine detected objects.</li>
+         <li>Click "Calc. Density" to finish the detection process and calculate information about object density in the volume.</li>
+
+         <div style="text-align:center"><h2>System Requirements</h2></div>
+
+        Software:
+        <ul style="list-style-type:none">
+          <li><a href="https://www.mathworks.com/products/matlab.html">MATLAB</a> R2016b or newer</li>
+          <li><a href="https://www.mathworks.com/products/image.html">Image Processing Toolbox</a> for MATLAB</li>
+          <li><a href="https://www.mathworks.com/products/parallel-computing.html">Parallel Computing Toolbox</a> for MATLAB</li>
+          <li><a href="http://www.bitplane.com/">Bitplane Imaris</a> (optional, tested with version 7)</li>
+        </ul>
+
+        Hardware (recommended):
+        <ul style="list-style-type:none">
+          <li>Processor (CPU): Intel Xeon >2GHz</li>
+          <li>System Memory (RAM): 32Gb</li>
+          <li>Video Card (GPU): NVidia Quadro with 4Gb VRAM</li>
+        </ul>
+
+        <p>This computer configuration will allow you to process a confocal microscope's image stack of typical size (2048x2048x150 voxels) in about 10 minutes.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <footer class="inner">
+      <div id="footer_wrap" class="outer">
+          <p class="copyright">ObjectFinder is developed and maintained by <a href="https://github.com/lucadellasantina">Luca Della Santina</a>.</p>
+          <p class="copyright">It builds on ideas initially developed in the <a href="http://wonglab.biostr.washington.edu">Wong Lab</a> at the University of Washington in Seattle.</p>
+    <div class="downloads inner">
+      <a class="zip_download_link" href="https://github.com/lucadellasantina/ObjectFinder/archive/v4.0.zip">Source code .zip</a>
+      <a class="tar_download_link" href="https://github.com/lucadellasantina/ObjectFinder/archive/v4.0.tar.gz">Source code .tar.gz</a>
+
+
+    </div>
+  </footer>
+  </body>
+</html>
