@@ -1,7 +1,9 @@
 %% ObjectFinder - Recognize 3D structures in image stacks
 %  Copyright (C) 2016,2017,2018 Luca Della Santina
 %
-%  This program is free software: you can redistribute it and/or modify
+%  This file is part of ObjectFinder
+%
+%  ObjectFinder is free software: you can redistribute it and/or modify
 %  it under the terms of the GNU General Public License as published by
 %  the Free Software Foundation, either version 3 of the License, or
 %  (at your option) any later version.
@@ -15,65 +17,21 @@
 %  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
 % *ObjectFinder allows to analyze an image volume containing objects
-% (i.e. labeling of synaptic structures) with the final goal of segmenting 
+% (i.e. labeling of synaptic structures) with the final goal of segmenting
 % each individual object and computing its indivudual properties.*
-%
-% The basic steps implemented by this semi-automate approach involve:
-%
-% * Load image stacks of the volume to inspect and supplemental labelings
-%   (A mask is optionally provided to limit the search volume)
-%
-% <<LoadImages.png>>
-%
-% * Select options to restrict the search of candidate objects
-%
-% <<Preferences.png>>
-%
-%
-% * Candidate objects are detected automatically using an iterative 
-%   thresholding method followed by watershed segmentation. This process
-%   is optimized for taking advantage of multi-core processors or
-%   processing remote clusters by multi-threading operations.
-%
-% <<IterativeThreshold.png>>
-%
-% * The user is requested to filter candidate objects according to one 
-%   or more parameters, by setting a threshold (usually using ITmax)
-% * The user refine the selection by 3D visual inspection using Imaris
-%
-% <<PunctaIdentification.png>>
-%
-% * Object distribution and density is calculated in the volume or across
-%   the cell skeleton.
-% * If no skeleton is present, object density is plotted against Z depth
-%
-% The main search loop follows the logic described in:
-%
-%  Developmental patterning of glutamatergic synapses onto 
-%  retinal ganglion cells.
-%  Morgan JL, Schubert T, Wong RO. Neural Dev. (2008) 26;3:8.
-%
-% Originally written for the detection of postsynaptic PSD95 puncta on
-% dendrites of gene-gun labelled retinal ganglion cells
-%
-% *Dependencies:*  
-%
-% * Imaris 7.2.3
-% * Image Processing Toolbox
-% * Parallel Computing Toolbox
 %
 
 % Preliminary check of valid current working directory structure
 if ~isdir([pwd filesep 'I'])
     error(['This folder is not valid for ObjectFinder analysis, '...
            'please change current working directory to one containing '...
-           'images to analyze within an "I" subfolder']); 
+           'images to analyze within an "I" subfolder']);
 end
 
 % Get the current working folder as base directory for the analysis
-disp('---- ObjectFinder 4.0 beta analysis ----');
-Settings.TPN = [pwd filesep]; 
-if exist([Settings.TPN 'Settings.mat'], 'file'), load([Settings.TPN 'Settings.mat']); end
+disp('---- ObjectFinder 4.7 analysis ----');
+if exist([pwd filesep 'Settings.mat'], 'file'), load([pwd filesep 'Settings.mat']); end
+Settings.TPN = [pwd filesep];
 save([Settings.TPN 'Settings.mat'], 'Settings');
 if ~isdir([Settings.TPN 'data']), mkdir([Settings.TPN 'data']); end
 if ~isdir([Settings.TPN 'images']), mkdir([Settings.TPN 'images']); end
@@ -109,7 +67,7 @@ txtBar('DONE');
 
 Imax=squeeze(max(Iraw,[],3)); % Create a MIP of each image to display
 figure('units', 'normalized', 'position', [0.05 0.25 0.9 0.4]);
-for i = 1:size(Imax,3)    
+for i = 1:size(Imax,3)
     subplot(1,size(Imax,3),i)
     image(Imax(:,:,i)*(500/double(max(max(Imax(:,:,i))))))
     title(['# ' num2str(i) ': ' tmpFiles(i).name]);
@@ -169,61 +127,58 @@ tmpPrompt = {'x-y diameter of the biggest dot (um, default 1)',...
              'x-y diameter of the smallest dot (um, default 0.25)',...
              'z diameter of the smallest dot (um, normally 0.5)',...
              'Intensity thresholds stepping (default 2)',...
-             'Multi-peak correction factor (default 0)',...
-             'Minimum iteration threshold (default 2)'};
+             'Minimum iteration threshold (default 2)',...
+             'Split multi-peak objects using watershed?(1:yes, 0:no)'};
 tmpAns = inputdlg(tmpPrompt, 'ObjectFinder settings', 1,...
-           {'1','2','0.25','0.5','2','0','2'});
+           {'1','2','0.25','0.5','2','2','1'});
 
 % Calculate volume of the minimum / maximum dot sizes allowed
 % largest CtBP2 = elipsoid 1um-xy/2um-z diameter = ~330 voxels (.103x.103x0.3 um pixel size)
-MaxDotSize = (4/3*pi*(str2double(tmpAns(1))/2)*(str2double(tmpAns(1))/2)*(str2double(tmpAns(2))/2)) / (Settings.ImInfo.xyum*Settings.ImInfo.xyum*Settings.ImInfo.zum);
-MinDotSize = (4/3*pi*(str2double(tmpAns(3))/2)*(str2double(tmpAns(3))/2)*(str2double(tmpAns(4))/2)) / (Settings.ImInfo.xyum*Settings.ImInfo.xyum*Settings.ImInfo.zum);
+MaxDotSize = round((4/3*pi*(str2double(tmpAns(1))/2)*(str2double(tmpAns(1))/2)*(str2double(tmpAns(2))/2)) / (Settings.ImInfo.xyum*Settings.ImInfo.xyum*Settings.ImInfo.zum));
+MinDotSize = round((4/3*pi*(str2double(tmpAns(3))/2)*(str2double(tmpAns(3))/2)*(str2double(tmpAns(4))/2)) / (Settings.ImInfo.xyum*Settings.ImInfo.xyum*Settings.ImInfo.zum));
 
-Settings.dotfinder.blockBuffer= round(str2double(tmpAns(1))/Settings.ImInfo.xyum);  % Overlapping buffer region between search block should be as big as the biggest dot we want to measure to make sure we are not missing any.
-%Settings.dotfinder.blockSize = 3* Settings.dotfinder.blockBuffer; % Use 3x blockBuffer for maximum speed during multi-threaded operations (best setting for speed)
-Settings.dotfinder.blockSize = 64; % Fixed this value to 64 otherwise computers with 16Gb RAM will run easily out of memory
-Settings.dotfinder.thresholdStep = str2double(tmpAns(5)); % step-size in the iterative search when looping through possible intensity values
-Settings.dotfinder.maxDotSize = MaxDotSize;       % max dot size exclusion criteria for single-peak dot DURING ITERATIVE THRESHOLDING, NOT FINAL.
-Settings.dotfinder.minDotSize= 3;                 % min dot size exclusion criteria DURING ITERATIVE THRESHOLDING, NOT FINAL.
-Settings.dotfinder.MultiPeakDotSizeCorrectionFactor = str2double(tmpAns(6)); % added by HO 2/8/2011, maxDotSize*MultiPeakDotSizeCorrectionFactor will be added for each additional dot joined to the previous dot, see dotfinder. With my PSD95CFP dots, super multipeak dots are rare, so put 0 for this factor.
-Settings.dotfinder.itMin = str2double(tmpAns(7)); % added by HO 2/9/2011 minimum iterative threshold allowed to be analyzed as voxels belonging to any dot...filter to remove value '1' pass thresholds. value '2' is also mostly noise for PSD95 dots, so 3 is the good starting point HO 2/9/2011
-Settings.dotfinder.peakCutoffLowerBound = 0.2;    % set threshold for all dots (0.2) after psychophysical testing with linescan and full 8-bit depth normalization HO 6/4/2010
-Settings.dotfinder.peakCutoffUpperBound = 0.2;    % set threshold for all dots (0.2) after psychophysical testing with linescan and full 8-bit depth normalization HO 6/4/2010
-Settings.dotfinder.minFinalDotITMax = 3;          % minimum ITMax allowed as FINAL dots. Any found dot whose ITMax is below this threshold value is removed from the registration into Dots. 5 will be the best for PSD95. HO 1/5/2010
-Settings.dotfinder.minFinalDotSize = MinDotSize;  % Minimum dot size allowed for FINAL dots.
+Settings.objfinder.blockBuffer= round(str2double(tmpAns(1))/Settings.ImInfo.xyum);  % Overlapping buffer region between search block should be as big as the biggest dot we want to measure to make sure we are not missing any.
+Settings.objfinder.blockSize = max(64, 4*Settings.objfinder.blockBuffer); % Use 3x blockBuffer for maximum speed or 64, whichever bigger (64 works well for computers with 16Gb RAM)
+Settings.objfinder.thresholdStep = str2double(tmpAns(5)); % stepping when iteratively looping through pixel intensities for connected components
+Settings.objfinder.maxDotSize = MaxDotSize;       % max dot size exclusion criteria for single-peak dot DURING ITERATIVE THRESHOLDING, NOT FINAL.
+Settings.objfinder.minDotSize= MinDotSize;        % min dot size exclusion criteria DURING ITERATIVE THRESHOLDING, NOT FINAL.
+Settings.objfinder.itMin = str2double(tmpAns(6)); % added by HO 2/9/2011 minimum iterative threshold allowed to be analyzed as voxels belonging to any dot...filter to remove value '1' pass thresholds. value '2' is also mostly noise for PSD95 dots, so 3 is the good starting point HO 2/9/2011
+Settings.objfinder.minFinalDotITMax = 3;          % minimum ITMax allowed as FINAL dots. Any found dot whose ITMax is below this threshold value is removed from the registration into Dots. 5 will be the best for PSD95. HO 1/5/2010
+Settings.objfinder.watershed = str2double(tmpAns(7));
 
 save([Settings.TPN 'Settings.mat'], 'Settings');
 clear BlockBuffer MaxDotSize MinDotSize tmp* h
 
 %% --- Find objects and calculate their properties ---
 % Seach objects inside the masked volume
-[Dots, Settings] = findObjects(Post.*Mask, Settings);
+Dots = findObjects(Post.*Mask, Settings);
 save([Settings.TPN 'Dots.mat'],'Dots');
-save([Settings.TPN 'Settings.mat'],'Settings');
 
 %% Create fields about sphericity of objects (Rounding)
-Dots = fitSphere(Dots, Settings.debug); 
+Dots = fitSphere(Dots, Settings);
 save([Settings.TPN 'Dots.mat'],'Dots');
 
 %% Filter objects according to the following post-processing criteria (SG)
-tmpOptions.EdgeDotCut = 1;    % remove dots on edge of the expanded mask
+tmpOptions.EdgeDotCut = 0;    % remove dots on edge of the expanded mask
 tmpOptions.SingleZDotCut = 1; % remove dots sitting on only one Z plane
 tmpOptions.xyStableDots = 0;  % remove objs whose centroid is not Z-stable
+tmpOptions.Thresholds.ITMax = 0;        % custom thresholds disabled
+tmpOptions.Thresholds.Vol = 0;          % custom thresholds disabled
+tmpOptions.Thresholds.MeanBright = 0;   % custom thresholds disabled
 Filter = filterObjects(Settings, Dots, tmpOptions);
 save([Settings.TPN 'Filter.mat'],'Filter');
 clear tmpOptions
 
+%% Volume inspector with threshold selection
+inspectVolume2D(Post.*Mask, Dots, Filter);
+load([Settings.TPN 'Filter.mat']); % reload filter with updated thresholds
+
 %% In Imaris select ItMax as filter, and export objects back to matlab.
 exportObjectsToImaris(Settings, Dots, Filter); % Transfer objects to Imaris
 
-%% Group objects that are facing each other and recalculate properties
+%% If a skeleton is present then calculate properties of the individual cell
 load([Settings.TPN 'Settings.mat']);
 load([Settings.TPN 'Filter.mat']); % Reload to synch imaris-selectied
-Grouped = groupFacingObjects(Settings, Dots, Filter);
-Grouped = fitSphere(Grouped, Settings.debug); 
-save([Settings.TPN 'Grouped.mat'],'Grouped');
-
-%% If a skeleton is present then calculate properties of the individual cell
 if exist([Settings.TPN 'Skel.mat'], 'file')
     load([Settings.TPN 'Skel.mat'])
     load([Settings.TPN 'Settings.mat'])
@@ -233,21 +188,73 @@ if exist([Settings.TPN 'Skel.mat'], 'file')
     Skel = calcSkelPathLength(Skel, Settings.debug);
     save([Settings.TPN 'SkelFiner.mat'], 'Skel');
 
-    Grouped = distDotsToCellBody(Grouped, Skel, Settings);
-    Grouped = distDotsToSkel(Grouped, Skel, Settings);
-    save([Settings.TPN 'Grouped.mat'],'Grouped');
+    Dots = distDotsToCellBody(Dots, Skel, Settings);
+    Dots = distDotsToSkel(Dots, Skel, Settings);
+    save([Settings.TPN 'Dots.mat'],'Dots');
 
-    Density = calcDensity(Settings, Grouped, Skel, true); % Generate heatmaps of object density
-    calcPathLengthStats(Settings, Grouped, Skel, true); % Plot distribution along dendrites
+    Density = calcDensity(Settings, getFilteredObjects(Dots, Filter), Skel, true); % Generate heatmaps of object density
+    calcPathLengthStats(Settings, getFilteredObjects(Dots, Filter), Skel, true); % Plot distribution along dendrites
 else
     % Compute and plot object distribution as function of volume depth
-    Density = calcDotDensityAlongZ(Grouped, true);
+    Density = calcDotDensityAlongZ(Settings, getFilteredObjects(Dots, Filter), true);
 end
     save([Settings.TPN 'Density'], 'Density') %fixed to save only Settings (9/2/09 HO)
 
 disp('---- ObjectFinder analysis done! ----');
 
 %% Change log
+% _*Version 4.7*               created on 2018-03-31 by Luca Della Santina_
+%
+%  + Colocalization analysis tab: manual colocalization
+%  + Colocalization of multiple channels are accumulated into Coloc.mat
+%  % Colocalization shows isolated object overlayed to Coloc. channel
+%  % Fixed titles of colocalization and indpector windows
+%  % Objects filtered using the 2D inspector are correctly passed to Imaris
+%  % 2D Inspector allows "None" as primary threshold to show no highlights
+%
+% _*Version 4.6*               created on 2018-03-26 by Luca Della Santina_
+%
+%  % Reduced findObjects mem usage by passing only block volume to workers 
+%  % Improved speed by 30% by optimizing search block size
+%  % findObjects uses Dots struct array for simpler manipulations
+%  % fixed missing Settings.mat when using RunAnalysis on new folder
+%  - Removed minFinalDotSize from parameters, just use MinDotSize
+%  - Removed multiPeakCorrectionfactor from parameters, use MaxDotSize
+%  - Removed psychophisics cutoff values from findObjects
+%
+% _*Version 4.5*               created on 2018-03-13 by Luca Della Santina_
+%
+%  + Batch processing mode under the new Automate tab
+%  % filterObjects accepts custom thresholds for ITMax, Vol, MeanBright
+%
+% _*Version 4.4*               created on 2018-03-10 by Luca Della Santina_
+%
+%  + Custom timer allows to start ObjectFinder at a specific time of day
+%  + 2D inspector allows to pick a visual threshold with volume navigation
+%  % Inspect3D returns error if Imaris cannot be started via COM interface
+%  % Inspect3D optional whether to display validated and rejected objects
+%  % Post, Dend and Mask are loaded at startup if present in working folder
+%  % Fixed error in calculating object density by depth percentage
+%
+% _*Version 4.3*               created on 2018-03-01 by Luca Della Santina_
+%
+%  % Calculation of sphericity properties is now optional
+%  % Inspect3D catches validated spots from imaris (no need for XTension)
+%
+% _*Version 4.2*               created on 2018-02-25 by Luca Della Santina_
+%
+%  + Added user control over search algorithm settings via GUI
+%  + Added user control over filter settings via GUI
+%  + Watershed segmentation is now optional in findObjects()
+%  + Replaced princomp with pca for PCA analysis in fitShphere()
+%
+% _*Version 4.1*               created on 2018-02-24 by Luca Della Santina_
+%
+%  + Plot Sholl analysis on Skel
+%  + getFilteredObjects returns all validated objects according to Filter
+%  + Added License text in the GUI's About tab
+%  + Added visual log on GUI during detection phase
+%  - Removed need for grouped.mat, all Objects are store in Dots.mat
 %
 % _*Version 4.0*               created on 2018-02-08 by Luca Della Santina_
 %
@@ -302,13 +309,7 @@ disp('---- ObjectFinder analysis done! ----');
 %
 % _*TODO*_
 %
-%  Calculate Sholl analysis on Skel as part of the standard analysis
 %  Allow processing of 12/16-bit images
 %  Make heatmaps plots with finer convolution disk (too coarse right now)
-%  Add automatic detection of neurite peak for monostratified cells
 %  Resolve minDotsize vs minFnalDotSize (current minDotSize fixed at 3px)
 %  Implement stepping=1 through gmode instead (current stepping of 2)
-%  Check LDSCAsampleCollect and LDSCAsampleUse calculate density differently
-%  When searching one signal (i.e. ctbp2 in IPL stack) prompt user several 
-%  sample fields to choose an appropriate ITmax threshold
-%  findObjects() Post is broadcasted to every worker, slice Igm better 

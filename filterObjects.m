@@ -1,7 +1,9 @@
 %% ObjectFinder - Recognize 3D structures in image stacks
 %  Copyright (C) 2016,2017,2018 Luca Della Santina
 %
-%  This program is free software: you can redistribute it and/or modify
+%  This file is part of ObjectFinder
+%
+%  ObjectFinder is free software: you can redistribute it and/or modify
 %  it under the terms of the GNU General Public License as published by
 %  the Free Software Foundation, either version 3 of the License, or
 %  (at your option) any later version.
@@ -79,6 +81,15 @@ if FilterOpts.xyStableDots
     save([Settings.TPN 'data' filesep 'xyStableDots.mat'],'xyStableDots');
     pass = pass & xyStableDots;                                     % Trim moving dots away
     fprintf('Dots excluded because moving during aquisition: %u\n', numel(xyStableDots) - numel(find(xyStableDots)));
+end
+
+% User-defined thresholds for ITMax, Vol and MeanBright
+if isfield(FilterOpts, 'Thresholds')
+    threshpass = Dots.ITMax >= FilterOpts.Thresholds.ITMax;
+    threshpass = threshpass & (Dots.Vol >= FilterOpts.Thresholds.Vol);
+    threshpass = threshpass & (Dots.MeanBright >= FilterOpts.Thresholds.MeanBright);
+    
+    pass = pass & threshpass; % Exclude objects not passing the thresholds
 end
 
 Filter.passF=pass';

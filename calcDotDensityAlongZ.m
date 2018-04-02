@@ -1,7 +1,9 @@
 %% ObjectFinder - Recognize 3D structures in image stacks
 %  Copyright (C) 2016,2017,2018 Luca Della Santina
 %
-%  This program is free software: you can redistribute it and/or modify
+%  This file is part of ObjectFinder
+%
+%  ObjectFinder is free software: you can redistribute it and/or modify
 %  it under the terms of the GNU General Public License as published by
 %  the Free Software Foundation, either version 3 of the License, or
 %  (at your option) any later version.
@@ -14,17 +16,19 @@
 %  You should have received a copy of the GNU General Public License
 %  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
-function [dotDensity] = calcDotDensityAlongZ(Grouped, showPlot)
+function [dotDensity] = calcDotDensityAlongZ(Settings, Grouped, showPlot)
 %% Accumulate passing dots coordinates (xyz) into dPosPassF
 dotDensity.zStart = 1;                    % Analyze the entire volume
-dotDensity.zEnd = Grouped.ImInfo.zNumVox; % Analyze the entire volume
+dotDensity.zEnd = Settings.ImInfo.zNumVox; % Analyze the entire volume
 dotDensity.binSize = (dotDensity.zEnd - dotDensity.zStart)/100; % binning densities every 1 percent of Z-depth
 
 tmpDensity=zeros(1, (dotDensity.zEnd - dotDensity.zStart +1));
 tmpDensityPerc=zeros(1, 100);
 for i = dotDensity.zStart: dotDensity.zEnd -1
     tmpDensity(i) = numel(find(Grouped.Pos(:,3) == i));
-    tmpDensityPerc(ceil(i/dotDensity.binSize)) = tmpDensityPerc(ceil(i/dotDensity.binSize)) + tmpDensity(i);
+end
+for i=1:100
+    tmpDensityPerc(i) = tmpDensity(ceil(i*dotDensity.binSize));
 end
 
 dotDensity.density = tmpDensity;
@@ -47,13 +51,13 @@ if showPlot
     box off;
     set(gca, 'color', 'none',  'TickDir','out');
     ylabel('Number of objects');
-    xlabel(['Volume depth percentage (bin size = ' num2str(Grouped.ImInfo.zum*dotDensity.binSize) ' um)']);
+    xlabel(['Volume depth percentage (bin size = ' num2str(Settings.ImInfo.zum*dotDensity.binSize) ' um)']);
     
     subplot(1,2,2);
     hold on;
-    sizeBin = Grouped.ImInfo.xyum*Grouped.ImInfo.xNumVox...
-        *Grouped.ImInfo.xyum*Grouped.ImInfo.yNumVox...
-        *Grouped.ImInfo.zum*dotDensity.binSize;
+    sizeBin = Settings.ImInfo.xyum*Settings.ImInfo.xNumVox...
+        *Settings.ImInfo.xyum*Settings.ImInfo.yNumVox...
+        *Settings.ImInfo.zum*dotDensity.binSize;
     tmpY = dotDensity.densityPerc / sizeBin;
     tmpX = 1:100;
     plot(tmpX, tmpY, 'k', 'MarkerSize', 8);

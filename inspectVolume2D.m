@@ -16,23 +16,12 @@
 %  You should have received a copy of the GNU General Public License
 %  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
-function colocRedraw(frame, vidObj, colmap)
-%   REDRAW (FRAME, VIDOBJ)
-%       frame  - frame number to process
-%       vidObj - mmread object
-%       colmap - colormap of your image, not necessary for RGB image, and
-%                even if you specify any colormap for RGB, it will not do
-%                anything to your image.
+function inspectVolume2D(Post, Dots, Filter)
+% Prepare volume for inspection
+CutNumVox = [256, 256, size(Post, 3)]; % Magnify a zoom region of this size
+ImStk = cat(4, Post, Post, Post); % Create an RGB version of Post
 
-% Check if vidOjb is RGB or gray, and read frame
-if size(vidObj, 4) == 3 %RGB 3-D matrix (4th dimention is R, G, B)
-    f = squeeze(vidObj(:,:,frame,:));
-else
-    f = vidObj(:,:,frame);
-end
-
-% Display
-image(f); axis image off
-if exist('colmap', 'var')
-    colormap(colmap);
+% Visualize volume as video frames
+redraw_func = @(frm, Pos, Filter) inspectRedraw(frm, Pos, ImStk, 'gray(256)', CutNumVox, Dots, Filter);
+inspectVideoFig(size(ImStk,3), redraw_func, [], [], ImStk, Dots, Filter);
 end

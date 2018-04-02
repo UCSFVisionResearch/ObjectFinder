@@ -1,7 +1,9 @@
 %% ObjectFinder - Recognize 3D structures in image stacks
 %  Copyright (C) 2016,2017,2018 Luca Della Santina
 %
-%  This program is free software: you can redistribute it and/or modify
+%  This file is part of ObjectFinder
+%
+%  ObjectFinder is free software: you can redistribute it and/or modify
 %  it under the terms of the GNU General Public License as published by
 %  the Free Software Foundation, either version 3 of the License, or
 %  (at your option) any later version.
@@ -43,13 +45,15 @@
 
 TPN = [pwd filesep]; % Instead reading TPN file, get current working folder
 load([TPN 'Settings.mat']);
-load([TPN 'Grouped.mat']); %load the source dot to search for fish
+load([TPN 'Dots.mat']); %load the source dot to search for fish
+load([TPN 'Filter.mat']); %load the source dot to search for fish
+Grouped = getFilteredObjects(Dots, Filter);
 load([TPN 'Post.mat']);
 
 if exist([TPN 'Colo.mat'],'file')
     load([TPN 'Colo.mat']);
 else
-    [FileName, PathName] = uigetfile('*.tif');
+    [FileName, PathName] = uigetfile([Settings.TPN 'I' filesep '*.tif']);
     ImInfo = imfinfo([PathName FileName]);
     Colo = zeros(ImInfo(1).Height, ImInfo(1).Width, length(ImInfo));
     for j = 1:length(ImInfo)
@@ -64,10 +68,10 @@ else
     [~, fName, ~] = fileparts(FileName);
     tmpPrompt = {'Reference objects: ', 'Colocalized signal:'};
     tmpAns = inputdlg(tmpPrompt, 'Assign channels', 1, {'PSD95', fName});
-    ColocManual.Source = tmpAns(1);
-    ColocManual.Fish1 = tmpAns(1);
+    ColocManual.Source = tmpAns{1};
+    ColocManual.Fish1 = tmpAns{2};
 
-    ManualColocAnalyzingFlag = ones([1,Grouped.Num], 'uint8');
+    ManualColocAnalyzingFlag = ones([1,numel(Grouped.Vox)], 'uint8');
     ColocManual.ListDotIDsManuallyColocAnalyzed = find(ManualColocAnalyzingFlag == 1);
     ColocManual.TotalNumDotsManuallyColocAnalyzed = length(ColocManual.ListDotIDsManuallyColocAnalyzed);
     ColocManual.ColocFlag = zeros([1,ColocManual.TotalNumDotsManuallyColocAnalyzed], 'uint8');
@@ -105,8 +109,8 @@ while ~isempty(find(ColocManual.ColocFlag == 0, 1))
         DotRepeatFlag = 0; %set the flag back to 0
     end
     
-    PostCutScaled = uint8(single(PostCut)*PostScalingFactor);
-    ColoCutScaled = uint8(single(ColoCut)*ColoScalingFactor);
+    PostCutScaled = uint8(single(PostCut)*single(PostScalingFactor));
+    ColoCutScaled = uint8(single(ColoCut)*single(ColoScalingFactor));
     ColoCutLocal = uint8(single(ColoCutScaled)*2);
     ZeroCut = zeros(size(PostCut), 'uint8');
     

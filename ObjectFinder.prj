@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="2214484436" file="/Users/lucadellasantina/Dropbox/MATLAB scripts/ObjectFinder/ObjectFinder.prj" location="/Users/lucadellasantina/Dropbox/MATLAB scripts/ObjectFinder" name="ObjectFinder" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="321628023" file="/Users/lucadellasantina/Dropbox/MATLAB scripts/ObjectFinder/ObjectFinder.prj" location="/Users/lucadellasantina/Dropbox/MATLAB scripts/ObjectFinder" name="ObjectFinder" target="target.mlapps" target-name="Package App">
     <param.appname>ObjectFinder</param.appname>
     <param.authnamewatermark>Luca Della Santina</param.authnamewatermark>
     <param.email>luca.dellasantina@gmail.com</param.email>
@@ -10,11 +10,10 @@
       <file>${PROJECT_ROOT}/ObjectFinder_resources/icon_24.png</file>
       <file>${PROJECT_ROOT}/ObjectFinder_resources/icon_16.png</file>
     </param.icons>
-    <param.summary>Recognize 3D structures in image stacks</param.summary>
-    <param.description>ObjectFinder allows to detect objects of arbitrary shape in a 3D image stack and calculate properties of each individual objects as well as their distribution within the volume. 
-This software is primarily developed for neuroscience research applications such as recognition of fluorescently-labelled synapses. 3D image stacks (TIF format) are generated using confocal or super-resolution microscopes.</param.description>
-    <param.screenshot>${PROJECT_ROOT}/ObjectFinder_resources/Screenshot_small.png</param.screenshot>
-    <param.version>4.0</param.version>
+    <param.summary>Recognize 3D structures in image volumes</param.summary>
+    <param.description>ObjectFinder allows you to recognize a large number of small structures, such as synapses in neuronal tissue, within a volumetric image stack.</param.description>
+    <param.screenshot>${PROJECT_ROOT}/ObjectFinder_resources/app_icon_big.png</param.screenshot>
+    <param.version>4.7</param.version>
     <param.products.name>
       <item>MATLAB</item>
       <item>Image Processing Toolbox</item>
@@ -45,16 +44,32 @@ This software is primarily developed for neuroscience research applications such
     </fileset.main>
     <fileset.depfun>
       <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-CalcDensity.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Edit-clear.png</file>
       <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Filter.png</file>
       <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-FindObjects.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Fruit-cherries.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Fruit-recherries.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Go-bottom.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Go-down.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Go-top.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Go-up.png</file>
       <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-HomeFolder.png</file>
       <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-Inspect.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-List-add.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-List-remove.png</file>
       <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-OpenImages.png</file>
-      <file>${PROJECT_ROOT}/ObjectFinder_resources/app_icon_small.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-View-refresh.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/48px-stop-hand.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/72px-Batch-process.png</file>
+      <file>${PROJECT_ROOT}/ObjectFinder_resources/app_icon_big.png</file>
       <file>${PROJECT_ROOT}/calcDensity.m</file>
       <file>${PROJECT_ROOT}/calcDotDensityAlongZ.m</file>
       <file>${PROJECT_ROOT}/calcPathLengthStats.m</file>
       <file>${PROJECT_ROOT}/calcSkelPathLength.m</file>
+      <file>${PROJECT_ROOT}/colocDotStackCutter.m</file>
+      <file>${PROJECT_ROOT}/colocManual.m</file>
+      <file>${PROJECT_ROOT}/colocRedraw.m</file>
+      <file>${PROJECT_ROOT}/colocVideoFig.m</file>
       <file>${PROJECT_ROOT}/distDotsToCellBody.m</file>
       <file>${PROJECT_ROOT}/distDotsToSkel.m</file>
       <file>${PROJECT_ROOT}/exportObjectsToImaris.m</file>
@@ -62,7 +77,10 @@ This software is primarily developed for neuroscience research applications such
       <file>${PROJECT_ROOT}/findObjects.m</file>
       <file>${PROJECT_ROOT}/fitSphere.m</file>
       <file>${PROJECT_ROOT}/generateFinerSkel.m</file>
-      <file>${PROJECT_ROOT}/groupFacingObjects.m</file>
+      <file>${PROJECT_ROOT}/getFilteredObjects.m</file>
+      <file>${PROJECT_ROOT}/inspectRedraw.m</file>
+      <file>${PROJECT_ROOT}/inspectVideoFig.m</file>
+      <file>${PROJECT_ROOT}/inspectVolume2D.m</file>
       <file>${PROJECT_ROOT}/saveastiff.m</file>
       <file>${PROJECT_ROOT}/shollAnalysis.m</file>
       <file>${PROJECT_ROOT}/txtBar.m</file>
@@ -114,7 +132,7 @@ This software is primarily developed for neuroscience research applications such
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>10.13.3</osver>
+      <osver>10.13.4</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>maci64</arch>
