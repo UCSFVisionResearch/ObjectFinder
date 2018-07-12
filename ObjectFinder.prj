@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="1700027632" file="/home/luca/Dropbox/MATLAB scripts/ObjectFinder/ObjectFinder.prj" location="/home/luca/Dropbox/MATLAB scripts/ObjectFinder" name="ObjectFinder" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="2813162005" file="/home/luca/Dropbox/MATLAB scripts/ObjectFinder/ObjectFinder.prj" location="/home/luca/Dropbox/MATLAB scripts/ObjectFinder" name="ObjectFinder" target="target.mlapps" target-name="Package App">
     <param.appname>ObjectFinder</param.appname>
     <param.authnamewatermark>Luca Della Santina</param.authnamewatermark>
     <param.email>luca.dellasantina@gmail.com</param.email>
@@ -14,7 +14,7 @@
 Copyright 2016-2018 Luca Della Santina (luca.dellasantina@gmail.com)</param.summary>
     <param.description />
     <param.screenshot />
-    <param.version>4.9</param.version>
+    <param.version>4.9.1</param.version>
     <param.products.name />
     <param.products.id />
     <param.products.version />
