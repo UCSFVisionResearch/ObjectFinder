@@ -17,11 +17,12 @@
 %  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 %
 
-function [fig_handle, axes_handle, scroll_bar_handles, scroll_func] = colocVideoFig(redraw_func, ColocManual, Grouped, Post, Colo, Colo2, ColocManual2)
+function Coloc = colocVideoFig(redraw_func, ColocManual, Grouped, Post, Colo, Colo2, ColocManual2)
 
 	%check arguments
 	check_callback(redraw_func);
-
+    Coloc = struct;
+    
     size_video = [0 0.03 0.87 0.97]; % default video window size within the open window (set same as the original videofig) HO 2/17/2011
     click = 0;
     [ImStk, DotNum, NumRemainingDots] = getNewImageStack();
@@ -48,15 +49,15 @@ function [fig_handle, axes_handle, scroll_bar_handles, scroll_func] = colocVideo
 	
     % Add GUI conmponents
     set(gcf,'units', 'normalized', 'position', [0.25 0.1 0.455 0.72]);
-    lblRefChan   = uicontrol('Style','text'      ,'Units','normalized','position',[.017,.970,.400,.020],'String',['Reference channel: ' ColocManual.Source]); %#ok, unused variable
-    lblCurrObjs  = uicontrol('Style','text'      ,'Units','normalized','position',[.017,.050,.400,.020],'String',['Current ' ColocManual.Source ' (green)']); %#ok, unused variable
     if isempty(Colo2)
-        lblColoChan  = uicontrol('Style','text'  ,'Units','normalized','position',[.445,.970,.400,.020],'String',['Colocalizing channel: ' ColocManual.Fish1]); %#ok, unused variable
-        lblOverlay   = uicontrol('Style','text'  ,'Units','normalized','position',[.445,.050,.400,.020],'String',['Current ' ColocManual.Source ' (green),' ColocManual.Fish1 ' (magenta)']); %#ok, unused variable
+        lblColoChan  = uicontrol('Style','text'  ,'Units','normalized','position',[.445,.050,.400,.020],'String',['Colocalizing channel: ' ColocManual.Fish1]); %#ok, unused variable
+        lblOverlay   = uicontrol('Style','text'  ,'Units','normalized','position',[.445,.970,.400,.020],'String',[ColocManual.Source ' (green),' ColocManual.Fish1 ' (magenta)']); %#ok, unused variable
     else
-        lblColoChan  = uicontrol('Style','text'  ,'Units','normalized','position',[.445,.970,.400,.020],'String',['Colocalizing red: ' ColocManual.Fish1 ' green: ' ColocManual2.Fish1]); %#ok, unused variable
-        lblOverlay   = uicontrol('Style','text'  ,'Units','normalized','position',[.445,.050,.400,.020],'String',['Current ' ColocManual.Source ' (green), ' ColocManual.Fish1 ' (red), ' ColocManual2.Fish1 ' (blue)']); %#ok, unused variable
+        lblColoChan  = uicontrol('Style','text'  ,'Units','normalized','position',[.445,.050,.400,.020],'String',['Colocalizing red: ' ColocManual.Fish1 ' blue: ' ColocManual2.Fish1]); %#ok, unused variable
+        lblOverlay   = uicontrol('Style','text'  ,'Units','normalized','position',[.445,.970,.400,.020],'String',[ColocManual.Source ' (green), ' ColocManual.Fish1 ' (red), ' ColocManual2.Fish1 ' (blue)']); %#ok, unused variable
     end
+    lblRefChan   = uicontrol('Style','text'      ,'Units','normalized','position',[.017,.050,.400,.020],'String',['Reference channel: ' ColocManual.Source]); %#ok, unused variable
+    lblCurrObjs  = uicontrol('Style','text'      ,'Units','normalized','position',[.017,.970,.400,.020],'String',['Current ' ColocManual.Source ' (green)']); %#ok, unused variable
 
     pnlSettings  = uipanel(  'Title',' '         ,'Units','normalized','Position',[.865,.005,.133,.990]); %#ok, unused variable    
     lblObjNum    = uicontrol('Style','text'      ,'Units','normalized','position',[.880,.950,.110,.020],'String','Objects'); %#ok, unused variable
@@ -123,20 +124,21 @@ function [fig_handle, axes_handle, scroll_bar_handles, scroll_func] = colocVideo
             
             ZeroCut = uint8(zeros(size(PostCut)));
             
-            ImStk1 = cat(4, PostCutScaled, PostCutScaled, PostCutScaled);
             if ~isempty(Colo2)
-                ImStk2 = cat(4, ColoCutScaled, ZeroCut, Colo2CutScaled);
+                ImStk1 = cat(4, ZeroCut, PostCutScaled.*PostVoxMapCut, ZeroCut);
+                ImStk2 = cat(4, ColoCutScaled, PostCutScaled.*PostVoxMapCut, Colo2CutScaled);
             else
-                ImStk2 = cat(4, ColoCutScaled, ColoCutScaled, ColoCutScaled);
+                ImStk1 = cat(4, ZeroCut, PostCutScaled.*PostVoxMapCut, ZeroCut);                
+                ImStk2 = cat(4, ColoCutScaled, PostCutScaled.*PostVoxMapCut, ColoCutScaled);
+            end
+
+            ImStk3 = cat(4, PostCutScaled, PostCutScaled, PostCutScaled);
+            if ~isempty(Colo2)
+                ImStk4 = cat(4, ColoCutScaled, ZeroCut, Colo2CutScaled);
+            else
+                ImStk4 = cat(4, ColoCutScaled, ColoCutScaled, ColoCutScaled);
             end
             
-            if ~isempty(Colo2)
-                ImStk3 = cat(4, ZeroCut, PostCutScaled.*PostVoxMapCut, ZeroCut);
-                ImStk4 = cat(4, ColoCutScaled, PostCutScaled.*PostVoxMapCut, Colo2CutScaled);
-            else
-                ImStk3 = cat(4, ZeroCut, PostCutScaled.*PostVoxMapCut, ZeroCut);                
-                ImStk4 = cat(4, ColoCutScaled, PostCutScaled.*PostVoxMapCut, ColoCutScaled);
-            end
 
             % Separate left and right panels visually with a vertical line
             ImStk1(1:end, end, 1:end, 1:3) = 60;
@@ -195,7 +197,7 @@ function [fig_handle, axes_handle, scroll_bar_handles, scroll_func] = colocVideo
                     Coloc(2) = ColocManual2;
                 end
             end
-            save([pwd filesep 'Coloc.mat'], 'Coloc'); % Add completed analusis to Coloc
+            %save([pwd filesep 'Coloc.mat'], 'Coloc'); % Add completed analusis to Coloc
             
             % Delete any temporary file
             if exist([pwd filesep 'Colo.mat'], 'file')
@@ -297,7 +299,7 @@ function [fig_handle, axes_handle, scroll_bar_handles, scroll_func] = colocVideo
         if ~isempty(Colo2)
             save([pwd filesep 'ColocManual2.mat'], 'ColocManual2');
         end
-        msgbox('Progress saved.');        
+        msgbox('Progress saved.','Saved', 'help');        
     end
     
     function wheel_scroll(src, event) %#ok
